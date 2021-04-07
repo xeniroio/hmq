@@ -3,11 +3,13 @@ package auth
 import (
 	authfile "github.com/fhmq/hmq/plugins/auth/authfile"
 	"github.com/fhmq/hmq/plugins/auth/authhttp"
+	"github.com/fhmq/hmq/plugins/auth/authjwt"
 )
 
 const (
 	AuthHTTP = "authhttp"
 	AuthFile = "authfile"
+	AuthJwt  = "authjwt"
 )
 
 type Auth interface {
@@ -21,6 +23,8 @@ func NewAuth(name string) Auth {
 		return authhttp.Init()
 	case AuthFile:
 		return authfile.Init()
+	case AuthJwt:
+		return authjwt.Init()
 	default:
 		return &mockAuth{}
 	}
