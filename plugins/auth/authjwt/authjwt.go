@@ -4,17 +4,22 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"path"
+	"net/url"
+	"os"
+	"regexp"
 	"time"
 
 	"github.com/fhmq/hmq/logger"
 	"go.uber.org/zap"
 )
 
-var log = logger.Get().Named("authhttp")
+var (
+	log = logger.Get().Named("authhttp")
+	uRe = regexp.MustCompile(`(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}`)
+)
 
 type authJWT struct {
-	authURL string
+	authURL *url.URL
 	client  *http.Client
 }
 
@@ -27,11 +32,29 @@ func Init() *authJWT {
 		},
 		Timeout: time.Second * 100,
 	}
+
+	u, _ := url.Parse("http://localhost:8080/login/auth")
 	a := &authJWT{
-		authURL: "http://localhost/auth",
+		authURL: u,
 		client:  c,
 	}
+	a.getEnv()
+
 	return a
+}
+
+func (a *authJWT) getEnv() {
+	if h := os.Getenv("AUTH_HOST"); len(h) > 0 {
+		if !uRe.MatchString(h) {
+			log.Error("ip formate error: ", zap.String("AUTH_HOST", h))
+			os.Exit(1)
+		}
+		a.authURL.Host = h
+	}
+
+	if p := os.Getenv("AUTH_PATH"); len(p) > 0 {
+		a.authURL.Path = p
+	}
 }
 
 func (a *authJWT) CheckConnect(clientID, username, password string) bool {
@@ -39,9 +62,7 @@ func (a *authJWT) CheckConnect(clientID, username, password string) bool {
 }
 
 func (a *authJWT) CheckACL(action, clientID, username, ip, topic string) bool {
-	log.Info("CheckACL in authJWT")
-	p := path.Join(a.authURL, "verify", topic, action)
-	req, err := http.NewRequest("POST", p, nil)
+	req, err := http.NewRequest("POST", a.authURL.String(), nil)
 	if err != nil {
 		log.Error("new request super: ", zap.Error(err))
 		return false
