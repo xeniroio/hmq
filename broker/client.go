@@ -481,6 +481,11 @@ func (c *client) ProcessPublishMessage(packet *packets.PublishPacket) {
 					continue
 				}
 			}
+
+			if !c.broker.CheckTopicAuth(SUB, s.client.info.clientID, s.client.info.username, c.info.remoteIP, s.topic) {
+				return
+			}
+
 			if s.share {
 				qsub = append(qsub, i)
 			} else {

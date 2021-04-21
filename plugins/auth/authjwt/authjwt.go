@@ -62,7 +62,7 @@ func (a *authJWT) CheckConnect(clientID, username, password string) bool {
 }
 
 func (a *authJWT) CheckACL(action, clientID, username, ip, topic string) bool {
-	req, err := http.NewRequest("POST", a.authURL.String(), nil)
+	req, err := http.NewRequest("POST", a.authURL.String()+topic+"/"+action, nil)
 	if err != nil {
 		log.Error("new request super: ", zap.Error(err))
 		return false
