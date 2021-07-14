@@ -483,7 +483,7 @@ func (c *client) ProcessPublishMessage(packet *packets.PublishPacket) {
 			}
 
 			if !c.broker.CheckTopicAuth(SUB, s.client.info.clientID, s.client.info.username, c.info.remoteIP, s.topic) {
-				return
+				continue
 			}
 
 			if s.share {
